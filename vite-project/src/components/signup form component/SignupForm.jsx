@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import "./signupform.css"; 
+import { useNavigate } from "react-router-dom";
 
 const SignupForm = () => {
   const [email, setEmail] = useState("");
@@ -8,6 +9,8 @@ const SignupForm = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
+  const navigate = useNavigate();
 
   const handleSignupForm = async (e) => {
     e.preventDefault();
@@ -61,6 +64,7 @@ const SignupForm = () => {
 
   return (
     <form className="form-container" onSubmit={handleSignupForm}>
+    <h1>Signup</h1>
       <input
         type="email"
         required
@@ -85,7 +89,9 @@ const SignupForm = () => {
       {errorMessage && <p className="error-message">{errorMessage}</p>}
       {successMessage && <p className="success-message">{successMessage}</p>}
       <button type="submit">Signup</button>
-      <button type="button">Have an account? Login</button>
+      <button type="button" onClick={()=>{
+        navigate("/loginForm")
+      }}>Have an account? Login</button>
     </form>
   );
 };
