@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import "./loginform.css";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -48,6 +49,8 @@ const LoginForm = () => {
     setPassword("");
   };
 
+
+
   return (
     <form onSubmit={handleUserLogin} className="form-container">
       <h1>Login</h1>
@@ -66,6 +69,9 @@ const LoginForm = () => {
         onChange={(e) => setPassword(e.target.value)}
       />
       {errorMessage && <p className="error-message">{errorMessage}</p>}
+  
+      <Link to="/forgotPassword">Forgot Your Password...?</Link>
+      
       <button type="submit">Login</button>
       <a href="">Forgot Password</a>
       <button
@@ -76,6 +82,7 @@ const LoginForm = () => {
       >
         Don't Have An Account
       </button>
+
     </form>
   );
 };
