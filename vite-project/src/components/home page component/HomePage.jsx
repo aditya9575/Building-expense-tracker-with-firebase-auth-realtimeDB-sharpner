@@ -1,10 +1,11 @@
 import React from "react";
 import "./homepage.css";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const HomePage = () => {
   const token = localStorage.getItem("authToken");
+  const navigate = useNavigate();
 
   const handleEmailVerification = () => {
     axios
@@ -34,6 +35,15 @@ const HomePage = () => {
       });
   };
 
+  const handleLogout=()=>{
+    try {
+      localStorage.removeItem("authToken");
+      navigate("/loginForm")
+    } catch (error) {
+      console.log("error in logging the user out");
+    }
+  }
+
   return (
     <div>
       <div className="left-Section">
@@ -48,6 +58,8 @@ const HomePage = () => {
       <div>
         <button onClick={handleEmailVerification}>Verify Your Email</button>
       </div>
+
+      <button onClick={handleLogout}>Logout</button>
 
       <hr />
     </div>
