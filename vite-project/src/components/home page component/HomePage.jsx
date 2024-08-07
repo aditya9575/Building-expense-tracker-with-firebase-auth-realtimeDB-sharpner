@@ -58,7 +58,7 @@ const HomePage = () => {
       <div>
         <button onClick={handleEmailVerification}>Verify Your Email</button>
       </div>
-
+      <button onClick={()=>{navigate("/expenseTracker")}}>Track Your Expenses</button>
       <button onClick={handleLogout}>Logout</button>
 
       <hr />
