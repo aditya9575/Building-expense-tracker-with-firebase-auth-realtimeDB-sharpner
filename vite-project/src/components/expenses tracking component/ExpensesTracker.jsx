@@ -11,67 +11,111 @@ const ExpensesTracker = () => {
   const [expenseAmt, setExpenseAmt] = useState("");
   const [expenseCategory, setExpenseCategory] = useState("food");
   const [expenseTotal, setExpenseTotal] = useState(0);
+  const [editItemId, setEditItemId] = useState(null);
+  const [editDesc, setEditDesc] = useState("");
+  const [editAmt, setEditAmt] = useState("");
+  const [editCat, setEditCat] = useState("food");
+  
 
-  useEffect(() => {
-    axios
-      .get(
+// fetching expense items from firebase 
+  const fetchExpenses = async () => {
+    try {
+      const response = await axios.get(
         "https://sharpner-expensetracker-default-rtdb.firebaseio.com/expenses.json"
-      )
-      .then((response) => {
-        // console.log(response.data);
-        const fetchedData = [];
-        for (const key in response.data) {
-          //we are extracting the values from the use of a key , response.data[key]->the response that came it spreads it and extracts the data
-          //of that very key from it
-          fetchedData.push({ id: key, ...response.data[key] });
-        }
-        console.log(fetchedData.amount)
-        setExpenses(fetchedData);
-        
-        const totalAmount = fetchedData.reduce((total, expense) => total + parseFloat(expense.amount), 0);
-        setExpenseTotal(Math.floor(totalAmount));
-      })
-      .catch((err) => {
-        console.log("Error in fetching the expenses from firebase realtime database ->" + err );
-        });
+      );
+
+      const fetchedData = [];
+      for (const key in response.data) {
+        fetchedData.push({ id: key, ...response.data[key] });
+      }
+      setExpenses(fetchedData);
+
+      const totalAmount = fetchedData.reduce(
+        (total, expense) => total + parseFloat(expense.amount),
+        0
+      );
+      setExpenseTotal(Math.floor(totalAmount));
+    } catch (err) {
+      console.log(
+        "Error in fetching the expenses from firebase realtime database ->" + err
+      );
+    }
+  };
+
+//adding useEffect here to have the functionality of running the fetch function everytime we add a new product or the app reloads  
+  useEffect(() => {
+    fetchExpenses();
   }, []);
 
-  const handleAddExpense = (e) => {
+//adding expense to firebase 
+  const handleAddExpense = async (e) => {
     e.preventDefault();
     const newExpense = {
-      id: Math.random(),
       description: expenseDesc,
       amount: parseFloat(expenseAmt),
       category: expenseCategory,
     };
 
-    // here we send post request to the firebase realtime database api end point and define our file name where we want to store the above
-    axios.post(
-        "https://sharpner-expensetracker-default-rtdb.firebaseio.com/expenses.json", newExpense
-      )
-      .then((response) => {
-        console.log(response);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    try {
+      await axios.post(
+        "https://sharpner-expensetracker-default-rtdb.firebaseio.com/expenses.json",
+        newExpense
+      );
+      fetchExpenses(); // Fetch expenses after adding a new one
+    } catch (err) {
+      console.log(err);
+    }
 
     setExpenseDesc("");
     setExpenseAmt("");
-    //this is handling the data without the database 
-    // setExpenses([...expenses, newExpense]);
-    // setExpenseTotal((prevTotal) => Math.floor(prevTotal + newExpense.amount)); // Using Math.floor
+  };
+
+//deleting the expenses from firebase 
+// ->copy the item id and after our file name add it and it should be just before .json method 
+// and then ultimately send the delete request to it
+const handleExpenseDelete = async (deleteItemID) => {
+    try {
+      const response = await axios.delete(
+        `https://sharpner-expensetracker-default-rtdb.firebaseio.com/expenses/${deleteItemID}.json`
+      );
+      console.log(response);
+      await fetchExpenses(); // Wait for expenses to be fetched after deletion
+    } catch (error) {
+      console.log("Error in deleting the item -> " + error);
+    }
+  };
+  
+// FOR EDITING WE JUST HAVE TO SEND A PUT REQUEST to that very item id so ->
+// copy the item id and after our file name add it and it should be just before .json method 
+const handleExpenseEdit = async () => {
+    try {
+      const updatedExpense = {
+        description: editDesc,
+        amount: parseFloat(editAmt),
+        category: editCat,
+      };
+
+      await axios.put(
+        `https://sharpner-expensetracker-default-rtdb.firebaseio.com/expenses/${editItemId}.json`,
+        updatedExpense
+      );
+      await fetchExpenses();
+      setEditItemId(null);
+    } catch (error) {
+      console.log("Error in editing the item -> " + error);
+    }
+  };
+
+  const handleEditClick = (item) => {
+    setEditItemId(item.id);
+    setEditDesc(item.description);
+    setEditAmt(item.amount);
+    setEditCat(item.category);
   };
 
   return (
     <div>
-      <button
-        onClick={() => {
-          navigate(-1);
-        }}
-      >
-        Back
-      </button>
+      <button onClick={() => navigate(-1)}>Back</button>
       <form onSubmit={handleAddExpense}>
         <input
           type="text"
@@ -107,20 +151,65 @@ const ExpensesTracker = () => {
                 <th>Description</th>
                 <th>Amount</th>
                 <th>Category</th>
+                <th></th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
               {expenses.map((item) => (
                 <tr key={item.id}>
-                  <td>{item.description}</td>
-                  <td>₹{item.amount}</td>
-                  <td>{item.category}</td>
+                  <td>
+                    {editItemId === item.id ? (
+                      <input
+                        type="text"
+                        value={editDesc}
+                        onChange={(e) => setEditDesc(e.target.value)}
+                      />
+                    ) : (
+                      item.description
+                    )}
+                  </td>
+                  <td>
+                    {editItemId === item.id ? (
+                      <input
+                        type="number"
+                        value={editAmt}
+                        onChange={(e) => setEditAmt(e.target.value)}
+                      />
+                    ) : (
+                      `₹${item.amount}`
+                    )}
+                  </td>
+                  <td>
+                    {editItemId === item.id ? (
+                      <select
+                        value={editCat}
+                        onChange={(e) => setEditCat(e.target.value)}
+                      >
+                        <option value="food">Food</option>
+                        <option value="petrol">Petrol</option>
+                        <option value="groceries">Groceries</option>
+                        <option value="emi">EMI</option>
+                      </select>
+                    ) : (
+                      item.category
+                    )}
+                  </td>
+                  <td>
+                    {editItemId === item.id ? (
+                      <button onClick={handleExpenseEdit}>Done</button>
+                    ) : (
+                      <button onClick={() => handleEditClick(item)}>Edit</button>
+                    )}
+                  </td>
+                  <td>
+                    <button onClick={() => handleExpenseDelete(item.id)}>Delete Item</button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <h2>Your Expenses Total to: ₹{Math.floor(expenseTotal)}</h2>{" "}
-          {/* Using Math.floor */}
+          <h2>Your Expenses Total to: ₹{Math.floor(expenseTotal)}</h2>
         </div>
       ) : (
         <h2>No Items Added Yet!</h2>
