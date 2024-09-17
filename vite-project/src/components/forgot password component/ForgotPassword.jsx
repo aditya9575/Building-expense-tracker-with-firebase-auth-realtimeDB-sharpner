@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const ForgotPassword = () => {
@@ -57,9 +57,6 @@ const ForgotPassword = () => {
           <button type="button" onClick={handleForgotPassword}>
             Send Password Reset Link
           </button>
-          <p>
-            Already a user? <Link to="/loginForm">Login</Link>
-          </p>
           {message && <p>{message}</p>}
         </form>
       )}

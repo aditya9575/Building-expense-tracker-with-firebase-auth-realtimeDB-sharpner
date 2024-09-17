@@ -47,6 +47,7 @@ const SignupForm = () => {
       );
       console.log("User has successfully signed up.", response.data);
       setSuccessMessage("Signup successful!");
+      navigate("/loginForm")
 
       // Reset form fields
       setEmail("");

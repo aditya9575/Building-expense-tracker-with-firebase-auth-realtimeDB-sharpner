@@ -9,21 +9,27 @@ const UpdateProfile = () => {
   const [fullName, setFullName] = useState("");
   const [photoURL, setPhotoURL] = useState("");
   const [idToken, setIdToken] = useState("");
+  const [loading, setLoading] = useState(false); 
+  const [error, setError] = useState(""); 
 
   const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
-    setIdToken(token);
     if (token) {
+      setIdToken(token);
       console.log("Authenticated user found");
       fetchUserData(token);
     } else {
       console.log("User not authenticated.");
+      setError("User is not authenticated. Please log in again.");
     }
   }, []);
 
   const fetchUserData = async (token) => {
+    setLoading(true);
+    setError(""); 
+
     try {
       const response = await axios.post(
         `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=AIzaSyBNymitO08g1U1_ag01P8DyC06xjcZc3R4`,
@@ -31,26 +37,31 @@ const UpdateProfile = () => {
         {
           headers: {
             "Content-Type": "application/json",
-          },
+          }
         }
       );
+      
       const user = response.data.users[0];
       setFullName(user.displayName || "");
       setPhotoURL(user.photoUrl || "");
       console.log("User data fetched successfully.");
     } catch (error) {
       console.error("Error fetching user data:", error);
+      setError("Failed to load user data. Please try again.");
+    } finally {
+      setLoading(false); // Stop loading
     }
   };
 
   const handleUserDetailsUpdate = (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
 
     const updateData = {
       idToken,
       displayName: fullName,
-      photoUrl: photoURL,
-      returnSecureToken: true,
+      photoUrl: photoURL
     };
 
     axios
@@ -60,14 +71,18 @@ const UpdateProfile = () => {
         {
           headers: {
             "Content-Type": "application/json",
-          },
+          }
         }
       )
       .then((response) => {
-        console.log("success", response);
+        console.log("Profile updated successfully", response);
+        setLoading(false);
+        alert("Profile updated successfully");
       })
       .catch((error) => {
-        console.log("error", error);
+        console.log("Error updating profile:", error);
+        setError("Failed to update profile. Please try again.");
+        setLoading(false);
       });
   };
 
@@ -76,13 +91,13 @@ const UpdateProfile = () => {
       <h4>Winners never quit, Quitters never win.</h4>
       <hr />
 
+      {error && <p style={{ color: "red" }}>{error}</p>} {/* Display error message */}
+
       <form onSubmit={handleUserDetailsUpdate}>
         <h2>Contact Details</h2>
         <button
           type="button"
-          onClick={() => {
-            navigate(-1);
-          }}
+          onClick={() => navigate(-1)}
         >
           Cancel
         </button>
@@ -94,9 +109,8 @@ const UpdateProfile = () => {
             type="text"
             required
             value={fullName}
-            onChange={(e) => {
-              setFullName(e.target.value);
-            }}
+            onChange={(e) => setFullName(e.target.value)}
+            disabled={loading} // Disable input when loading
           />
         </div>
 
@@ -107,13 +121,14 @@ const UpdateProfile = () => {
             type="text"
             required
             value={photoURL}
-            onChange={(e) => {
-              setPhotoURL(e.target.value);
-            }}
+            onChange={(e) => setPhotoURL(e.target.value)}
+            disabled={loading} // Disable input when loading
           />
         </div>
 
-        <button type="submit">Update</button>
+        <button type="submit" disabled={loading}>
+          {loading ? "Updating..." : "Update"}
+        </button>
       </form>
       <hr />
     </div>

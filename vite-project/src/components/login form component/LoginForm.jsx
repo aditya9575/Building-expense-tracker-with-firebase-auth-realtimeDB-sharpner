@@ -1,18 +1,18 @@
 import React, { useState } from "react";
-import "./loginform.css";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
   const handleUserLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     const loginData = {
       email,
@@ -30,26 +30,26 @@ const LoginForm = () => {
           },
         }
       );
+
+      const { idToken, localId } = response.data;
+
       console.log("User has successfully logged in.", response.data);
 
-      // Store the token in local storage
-      localStorage.setItem("authToken", response.data.idToken);
+      // Store token and userId in localStorage
+      localStorage.setItem("authToken", idToken);
+      localStorage.setItem("userId", localId); // Store userId for later use
 
       navigate("/homePage");
     } catch (error) {
       console.error("Error in logging in:", error);
-      if (error.response && error.response.data && error.response.data.error) {
-        setErrorMessage(error.response.data.error.message);
-      } else {
-        setErrorMessage("Login failed. Please try again.");
-      }
+      setErrorMessage(error.response?.data?.error?.message || "Login failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
 
     setEmail("");
     setPassword("");
   };
-
-
 
   return (
     <form onSubmit={handleUserLogin} className="form-container">
@@ -69,11 +69,17 @@ const LoginForm = () => {
         onChange={(e) => setPassword(e.target.value)}
       />
       {errorMessage && <p className="error-message">{errorMessage}</p>}
-  
-      <Link to="/forgotPassword">Forgot Your Password...?</Link>
-      
-      <button type="submit">Login</button>
-      <a href="">Forgot Password</a>
+      <button type="submit" disabled={loading}>
+        {loading ? "Logging in..." : "Login"}
+      </button>
+
+      <button type="button"
+        onClick={() => {
+          navigate("/forgotPassword");
+        }}
+      >
+        Forgot Password
+      </button>
       <button
         type="button"
         onClick={() => {
@@ -82,7 +88,6 @@ const LoginForm = () => {
       >
         Don't Have An Account
       </button>
-
     </form>
   );
 };

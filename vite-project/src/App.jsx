@@ -1,8 +1,6 @@
 import React from "react";
 import "./App.css";
-import Navbar from "./components/navbar component/Navbar";
 import SignupForm from "./components/signup form component/SignupForm";
-import Products from "./components/products component/Products";
 import HomePage from "./components/home page component/HomePage";
 import UpdateProfile from "./components/profile update component/UpdateProfile";
 import ForgotPassword from "./components/forgot password component/ForgotPassword";
@@ -21,13 +19,13 @@ const App = () => {
         <Route path="/" element={<SignupForm />} />
         <Route path="/signupForm" element={<SignupForm />} />
         <Route path="/loginForm" element={<LoginForm />} />
+        <Route path="/forgotPassword" element={<ForgotPassword/>}/>
 
         {isAuthenticated ? (
           <>
             <Route path="/homePage" element={<HomePage />} />
 
             <Route path="/updateProfile" element={<UpdateProfile />} />
-            <Route path="/forgotPassword" element={<ForgotPassword />} />
 
             <Route path="/expenseTracker" element={<ExpensesTracker />} />
           </>

@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
-import "./expensetracker.css";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import "./expensetracker.css";
 
 const ExpensesTracker = () => {
   const navigate = useNavigate();
-
   const [expenses, setExpenses] = useState([]);
   const [expenseDesc, setExpenseDesc] = useState("");
   const [expenseAmt, setExpenseAmt] = useState("");
@@ -15,13 +14,13 @@ const ExpensesTracker = () => {
   const [editDesc, setEditDesc] = useState("");
   const [editAmt, setEditAmt] = useState("");
   const [editCat, setEditCat] = useState("food");
-  
 
-// fetching expense items from firebase 
+  const userId = localStorage.getItem("userId");
+
   const fetchExpenses = async () => {
     try {
       const response = await axios.get(
-        "https://sharpner-expensetracker-default-rtdb.firebaseio.com/expenses.json"
+        `https://sharpner-expensetracker-default-rtdb.firebaseio.com/expenses/${userId}.json`
       );
 
       const fetchedData = [];
@@ -36,18 +35,17 @@ const ExpensesTracker = () => {
       );
       setExpenseTotal(Math.floor(totalAmount));
     } catch (err) {
-      console.log(
-        "Error in fetching the expenses from firebase realtime database ->" + err
-      );
+      console.error("Error fetching expenses from Firebase:", err);
     }
   };
 
-//adding useEffect here to have the functionality of running the fetch function everytime we add a new product or the app reloads  
   useEffect(() => {
-    fetchExpenses();
-  }, []);
+    if (userId) {
+      fetchExpenses();
+    }
+  }, [userId]);
 
-//adding expense to firebase 
+  // Add new expense to Firebase
   const handleAddExpense = async (e) => {
     e.preventDefault();
     const newExpense = {
@@ -58,59 +56,57 @@ const ExpensesTracker = () => {
 
     try {
       await axios.post(
-        "https://sharpner-expensetracker-default-rtdb.firebaseio.com/expenses.json",
+        `https://sharpner-expensetracker-default-rtdb.firebaseio.com/expenses/${userId}.json`,
         newExpense
       );
       fetchExpenses(); // Fetch expenses after adding a new one
     } catch (err) {
-      console.log(err);
+      console.error("Error adding expense:", err);
     }
 
     setExpenseDesc("");
     setExpenseAmt("");
   };
 
-//deleting the expenses from firebase 
-// ->copy the item id and after our file name add it and it should be just before .json method 
-// and then ultimately send the delete request to it
-const handleExpenseDelete = async (deleteItemID) => {
+  // Delete an expense from Firebase
+  const handleExpenseDelete = async (deleteItemID) => {
     try {
-      const response = await axios.delete(
-        `https://sharpner-expensetracker-default-rtdb.firebaseio.com/expenses/${deleteItemID}.json`
+      await axios.delete(
+        `https://sharpner-expensetracker-default-rtdb.firebaseio.com/expenses/${userId}/${deleteItemID}.json`
       );
-      console.log(response);
-      await fetchExpenses(); // Wait for expenses to be fetched after deletion
+      fetchExpenses(); // Fetch expenses after deletion
     } catch (error) {
-      console.log("Error in deleting the item -> " + error);
-    }
-  };
-  
-// FOR EDITING WE JUST HAVE TO SEND A PUT REQUEST to that very item id so ->
-// copy the item id and after our file name add it and it should be just before .json method 
-const handleExpenseEdit = async () => {
-    try {
-      const updatedExpense = {
-        description: editDesc,
-        amount: parseFloat(editAmt),
-        category: editCat,
-      };
-
-      await axios.put(
-        `https://sharpner-expensetracker-default-rtdb.firebaseio.com/expenses/${editItemId}.json`,
-        updatedExpense
-      );
-      await fetchExpenses();
-      setEditItemId(null);
-    } catch (error) {
-      console.log("Error in editing the item -> " + error);
+      console.error("Error deleting the item:", error);
     }
   };
 
+  // Handle click to start editing an expense
   const handleEditClick = (item) => {
     setEditItemId(item.id);
     setEditDesc(item.description);
     setEditAmt(item.amount);
     setEditCat(item.category);
+  };
+
+  // Save the edited expense
+  const handleExpenseEdit = async (e) => {
+    e.preventDefault();
+    const updatedExpense = {
+      description: editDesc,
+      amount: parseFloat(editAmt),
+      category: editCat,
+    };
+
+    try {
+      await axios.put(
+        `https://sharpner-expensetracker-default-rtdb.firebaseio.com/expenses/${userId}/${editItemId}.json`,
+        updatedExpense
+      );
+      fetchExpenses(); // Fetch updated expenses
+      setEditItemId(null); // Reset editing state
+    } catch (error) {
+      console.error("Error editing the item:", error);
+    }
   };
 
   return (
@@ -197,19 +193,19 @@ const handleExpenseEdit = async () => {
                   </td>
                   <td>
                     {editItemId === item.id ? (
-                      <button onClick={handleExpenseEdit}>Done</button>
+                      <button onClick={handleExpenseEdit}>Save</button>
                     ) : (
                       <button onClick={() => handleEditClick(item)}>Edit</button>
                     )}
                   </td>
                   <td>
-                    <button onClick={() => handleExpenseDelete(item.id)}>Delete Item</button>
+                    <button onClick={() => handleExpenseDelete(item.id)}>Delete</button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <h2>Your Expenses Total to: ₹{Math.floor(expenseTotal)}</h2>
+          <h2>Your Expenses Total to: ₹{expenseTotal}</h2>
         </div>
       ) : (
         <h2>No Items Added Yet!</h2>
