@@ -114,9 +114,7 @@ const HomePage = () => {
         >
           Track Your Expenses
         </button>
-        {/* <button className="action-button" onClick={checkEmailVerificationStatus}>
-          Check Email Verification
-        </button> */}
+    
         <button className="action-button" onClick={handleLogout}>
           Logout
         </button>
